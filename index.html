@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Random Password Generator</title>
+<style>
+  :root {
+    --bg-color-1: #050816;
+    --bg-color-2: #0f172a;
+    --accent: #38bdf8;
+    --accent-soft: rgba(56, 189, 248, 0.15);
+    --text-main: #e5e7eb;
+    --text-muted: #9ca3af;
+    --danger: #f97373;
+    --radius: 14px;
+    --blur: 24px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  canvas#particles {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+  }
+
+  .overlay-gradient {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.18), transparent 55%),
+      radial-gradient(circle at 90% 100%, rgba(129, 140, 248, 0.18), transparent 55%);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .app {
+    position: relative;
+    max-width: 520px;
+    margin: 6vh auto;
+    padding: 24px 22px 26px;
+    background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.96));
+    border-radius: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow:
+      0 0 0 1px rgba(15, 23, 42, 0.9),
+      0 24px 80px rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(var(--blur));
+  }
+
+  .app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  .title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .title-pill {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    color: var(--text-muted);
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.6);
+    background: radial-gradient(circle at top, rgba(56, 189, 248, 0.18), rgba(15, 23, 42, 0.9));
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--accent);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.9);
+  }
+
+  .password-row {
+    margin-top: 10px;
+    margin-bottom: 16px;
+    padding: 10px 10px 10px 12px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .password-display {
+    flex: 1;
+    font-family: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #e5e7eb;
+  }
+
+  .password-display.placeholder {
+    color: #6b7280;
+  }
+
+  .password-meta {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .btn {
+    border: none;
+    outline: none;
+    cursor: pointer;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: radial-gradient(circle at top, rgba(56, 189, 248, 0.2), rgba(15, 23, 42, 0.98));
+    color: var(--accent);
+    border: 1px solid rgba(56, 189, 248, 0.7);
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background 0.12s ease-out;
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9), 0 10px 30px rgba(15, 23, 42, 0.9);
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9), 0 16px 40px rgba(15, 23, 42, 0.95);
+    background: radial-gradient(circle at top, rgba(56, 189, 248, 0.28), rgba(15, 23, 42, 0.98));
+  }
+
+  .btn:active {
+    transform: translateY(0);
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9), 0 8px 24px rgba(15, 23, 42, 0.9);
+  }
+
+  .btn.secondary {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(148, 163, 184, 0.7);
+    color: var(--text-main);
+  }
+
+  .btn.secondary:hover {
+    background: rgba(15, 23, 42, 0.98);
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr);
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .control-group {
+    padding: 10px 11px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+  }
+
+  .control-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .control-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .control-subtitle {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .length-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .length-value {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    background: rgba(15, 23, 42, 0.96);
+    color: var(--accent);
+    min-width: 34px;
+    text-align: center;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent-soft), rgba(31, 41, 55, 0.9));
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+    cursor: pointer;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+    cursor: pointer;
+  }
+
+  .checkboxes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 10px;
+    margin-top: 4px;
+  }
+
+  .checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .checkbox input {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+  }
+
+  .strength {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .strength-bars {
+    display: flex;
+    gap: 3px;
+  }
+
+  .strength-bar {
+    width: 14px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(31, 41, 55, 0.9);
+  }
+
+  .strength-bar.active-1 {
+    background: #f97316;
+  }
+
+  .strength-bar.active-2 {
+    background: #facc15;
+  }
+
+  .strength-bar.active-3 {
+    background: #22c55e;
+  }
+
+  .strength-bar.active-4 {
+    background: #22c55e;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
+  }
+
+  .error {
+    font-size: 0.7rem;
+    color: var(--danger);
+    margin-top: 4px;
+    min-height: 14px;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  @media (max-width: 640px) {
+    .app {
+      margin: 16px;
+      padding: 18px 14px 20px;
+    }
+    .controls {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div class="overlay-gradient"></div>
+
+<div class="app">
+  <header class="app-header">
+    <div class="title-block">
+      <div class="title">
+        Quantum Password Forge
+        <span class="title-pill">max 72 chars</span>
+      </div>
+      <div class="subtitle">Crypto‑grade randomness, copy‑ready output, and a live particle field.</div>
+    </div>
+    <div class="badge">
+      <span class="badge-dot"></span>
+      <span>crypto.getRandomValues()</span>
+    </div>
+  </header>
+
+  <section class="password-row">
+    <div style="flex:1; min-width:0;">
+      <div id="passwordDisplay" class="password-display placeholder">
+        Click “Generate” to forge a password…
+      </div>
+      <div class="password-meta" id="passwordMeta"></div>
+    </div>
+    <button class="btn secondary" id="copyBtn" title="Copy password">
+      <span>Copy</span>
+    </button>
+  </section>
+
+  <section class="controls">
+    <div class="control-group">
+      <div class="control-header">
+        <div>
+          <div class="control-title">Length</div>
+          <div class="control-subtitle">Up to 72 characters</div>
+        </div>
+      </div>
+      <div class="length-row">
+        <input type="range" id="lengthSlider" min="4" max="72" value="20" />
+        <div class="length-value" id="lengthValue">20</div>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div>
+          <div class="control-title">Character set</div>
+          <div class="control-subtitle">Choose what to include</div>
+        </div>
+      </div>
+      <div class="checkboxes">
+        <label class="checkbox">
+          <input type="checkbox" id="useLower" checked />
+          <span>Lowercase (a‑z)</span>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" id="useUpper" checked />
+          <span>Uppercase (A‑Z)</span>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" id="useDigits" checked />
+          <span>Digits (0‑9)</span>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" id="useSymbols" />
+          <span>Symbols (!@#$…)</span>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer-row">
+    <div class="strength">
+      <span>Strength</span>
+      <div class="strength-bars">
+        <div class="strength-bar" id="s1"></div>
+        <div class="strength-bar" id="s2"></div>
+        <div class="strength-bar" id="s3"></div>
+        <div class="strength-bar" id="s4"></div>
+      </div>
+    </div>
+    <div class="error" id="errorMsg"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn secondary" id="regenerateBtn">Regenerate</button>
+    <button class="btn" id="generateBtn">Generate</button>
+  </div>
+</div>
+
+<script>
+  // ===== Password generator using crypto.getRandomValues =====
+  const lengthSlider = document.getElementById("lengthSlider");
+  const lengthValue = document.getElementById("lengthValue");
+  const useLower = document.getElementById("useLower");
+  const useUpper = document.getElementById("useUpper");
+  const useDigits = document.getElementById("useDigits");
+  const useSymbols = document.getElementById("useSymbols");
+  const passwordDisplay = document.getElementById("passwordDisplay");
+  const passwordMeta = document.getElementById("passwordMeta");
+  const errorMsg = document.getElementById("errorMsg");
+  const copyBtn = document.getElementById("copyBtn");
+  const generateBtn = document.getElementById("generateBtn");
+  const regenerateBtn = document.getElementById("regenerateBtn");
+  const strengthBars = [
+    document.getElementById("s1"),
+    document.getElementById("s2"),
+    document.getElementById("s3"),
+    document.getElementById("s4"),
+  ];
+
+  lengthSlider.addEventListener("input", () => {
+    lengthValue.textContent = lengthSlider.value;
+    updateStrengthPreview();
+  });
+
+  [useLower, useUpper, useDigits, useSymbols].forEach(cb =>
+    cb.addEventListener("change", () => {
+      updateStrengthPreview();
+    })
+  );
+
+  function getCharPool() {
+    let pool = "";
+    if (useLower.checked) pool += "abcdefghijklmnopqrstuvwxyz";
+    if (useUpper.checked) pool += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    if (useDigits.checked) pool += "0123456789";
+    if (useSymbols.checked) pool += "!@#$%^&*()-_=+[]{};:,.<>/?|~";
+    return pool;
+  }
+
+  function generatePassword() {
+    errorMsg.textContent = "";
+    const length = Math.min(parseInt(lengthSlider.value, 10) || 0, 72);
+    lengthSlider.value = length;
+    lengthValue.textContent = length;
+
+    const pool = getCharPool();
+    if (!pool) {
+      errorMsg.textContent = "Select at least one character type.";
+      return "";
+    }
+    if (length < 4) {
+      errorMsg.textContent = "Use length 4 or more for better security.";
+    }
+
+    const poolLength = pool.length;
+    const randomBytes = new Uint32Array(length);
+    crypto.getRandomValues(randomBytes);
+
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      const index = randomBytes[i] % poolLength;
+      password += pool.charAt(index);
+    }
+    return password;
+  }
+
+  function updateStrengthPreview() {
+    const length = parseInt(lengthSlider.value, 10) || 0;
+    const pool = getCharPool();
+    const variety =
+      (useLower.checked ? 1 : 0) +
+      (useUpper.checked ? 1 : 0) +
+      (useDigits.checked ? 1 : 0) +
+      (useSymbols.checked ? 1 : 0);
+
+    let score = 0;
+    if (length >= 8) score++;
+    if (length >= 12) score++;
+    if (length >= 20) score++;
+    if (variety >= 2) score++;
+    if (variety >= 3) score++;
+    if (variety === 4) score++;
+
+    let level = 0;
+    if (score <= 1) level = 1;
+    else if (score <= 3) level = 2;
+    else if (score <= 5) level = 3;
+    else level = 4;
+
+    strengthBars.forEach((bar, idx) => {
+      bar.className = "strength-bar";
+      if (idx < level) {
+        bar.classList.add("active-" + level);
+      }
+    });
+  }
+
+  function renderPassword(pwd) {
+    if (!pwd) {
+      passwordDisplay.textContent = "Click “Generate” to forge a password…";
+      passwordDisplay.classList.add("placeholder");
+      passwordMeta.textContent = "";
+      return;
+    }
+    passwordDisplay.textContent = pwd;
+    passwordDisplay.classList.remove("placeholder");
+    passwordMeta.textContent = `${pwd.length} characters • copy‑ready`;
+  }
+
+  generateBtn.addEventListener("click", () => {
+    const pwd = generatePassword();
+    renderPassword(pwd);
+    updateStrengthPreview();
+  });
+
+  regenerateBtn.addEventListener("click", () => {
+    const current = passwordDisplay.classList.contains("placeholder")
+      ? ""
+      : passwordDisplay.textContent;
+    const pwd = generatePassword();
+    if (pwd && pwd !== current) {
+      renderPassword(pwd);
+    } else if (pwd) {
+      // if same by chance, regenerate once more
+      renderPassword(generatePassword());
+    }
+    updateStrengthPreview();
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    const pwd = passwordDisplay.classList.contains("placeholder")
+      ? ""
+      : passwordDisplay.textContent;
+    if (!pwd) {
+      errorMsg.textContent = "Nothing to copy yet.";
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(pwd);
+      errorMsg.textContent = "Copied to clipboard.";
+      setTimeout(() => {
+        if (errorMsg.textContent === "Copied to clipboard.") {
+          errorMsg.textContent = "";
+        }
+      }, 1500);
+    } catch {
+      errorMsg.textContent = "Clipboard not available in this context.";
+    }
+  });
+
+  updateStrengthPreview();
+
+  // ===== Live particle background =====
+  const canvas = document.getElementById("particles");
+  const ctx = canvas.getContext("2d");
+  let particles = [];
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+
+  function resizeCanvas() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width * window.devicePixelRatio;
+    canvas.height = height * window.devicePixelRatio;
+    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  function createParticles(count) {
+    particles = [];
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: 1 + Math.random() * 1.6,
+        alpha: 0.2 + Math.random() * 0.6,
+      });
+    }
+  }
+
+  createParticles(120);
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, width, height);
+
+    // soft background glow
+    const gradient = ctx.createRadialGradient(
+      width * 0.5,
+      height * 0.2,
+      0,
+      width * 0.5,
+      height * 0.2,
+      width * 0.8
+    );
+    gradient.addColorStop(0, "rgba(15, 23, 42, 0.4)");
+    gradient.addColorStop(1, "rgba(2, 6, 23, 0.9)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // particles
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < -50) p.x = width + 50;
+      if (p.x > width + 50) p.x = -50;
+      if (p.y < -50) p.y = height + 50;
+      if (p.y > height + 50) p.y = -50;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(56, 189, 248, ${p.alpha})`;
+      ctx.fill();
+    }
+
+    // subtle connecting lines
+    const maxDist = 120;
+    ctx.lineWidth = 0.6;
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const p1 = particles[i];
+        const p2 = particles[j];
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < maxDist) {
+          const alpha = (1 - dist / maxDist) * 0.35;
+          ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(drawParticles);
+  }
+
+  drawParticles();
+</script>
+</body>
+</html>
