@@ -2,240 +2,347 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Random Password Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Password Forge — Random Password Generator</title>
 <style>
   :root {
-    --bg-color-1: #050816;
-    --bg-color-2: #0f172a;
-    --accent: #38bdf8;
-    --accent-soft: rgba(56, 189, 248, 0.15);
-    --text-main: #e5e7eb;
-    --text-muted: #9ca3af;
-    --danger: #f97373;
+    --bg: #070707;
+    --panel: #101010;
+    --panel-2: #161616;
+    --panel-3: #1c1c1c;
+    --line: #262626;
+    --line-strong: #3a3a3a;
+    --text: #f2f2f2;
+    --muted: #8d8d8d;
+    --faint: #5a5a5a;
+    --white: #ffffff;
     --radius: 14px;
-    --blur: 24px;
+    --mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", "Fira Code", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   }
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
 
   body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
-    color: var(--text-main);
+    background:
+      radial-gradient(900px 500px at 50% -10%, rgba(255, 255, 255, 0.07), transparent 70%),
+      radial-gradient(700px 500px at 90% 110%, rgba(255, 255, 255, 0.035), transparent 70%),
+      var(--bg);
+    color: var(--text);
     min-height: 100vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    padding: 40px 18px 64px;
+    -webkit-font-smoothing: antialiased;
   }
 
   canvas#particles {
     position: fixed;
     inset: 0;
-    z-index: -1;
-  }
-
-  .overlay-gradient {
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.18), transparent 55%),
-      radial-gradient(circle at 90% 100%, rgba(129, 140, 248, 0.18), transparent 55%);
-    mix-blend-mode: screen;
+    z-index: 0;
     pointer-events: none;
-    z-index: -1;
   }
 
-  .app {
+  .shell {
     position: relative;
-    max-width: 520px;
-    margin: 6vh auto;
-    padding: 24px 22px 26px;
-    background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.96));
-    border-radius: 24px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    box-shadow:
-      0 0 0 1px rgba(15, 23, 42, 0.9),
-      0 24px 80px rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(var(--blur));
-  }
-
-  .app-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 18px;
-  }
-
-  .title-block {
+    z-index: 1;
+    width: 100%;
+    max-width: 580px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 14px;
   }
 
-  .title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+  /* ===== Header ===== */
+  .topbar {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 2px 4px 6px;
   }
 
-  .title-pill {
-    font-size: 0.7rem;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.5);
-    color: var(--text-muted);
+  .brand { display: flex; gap: 12px; align-items: flex-start; }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: 11px;
+    border: 1px solid var(--line-strong);
+    background: linear-gradient(160deg, #1e1e1e, #0e0e0e);
+    display: grid;
+    place-items: center;
+    color: var(--white);
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 1px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
-  .subtitle {
-    font-size: 0.8rem;
-    color: var(--text-muted);
+  h1 {
+    font-size: 1.18rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
   }
 
-  .badge {
-    font-size: 0.7rem;
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(56, 189, 248, 0.6);
-    background: radial-gradient(circle at top, rgba(56, 189, 248, 0.18), rgba(15, 23, 42, 0.9));
-    color: var(--accent);
+  .tagline {
+    margin-top: 3px;
+    font-size: 0.775rem;
+    color: var(--muted);
+    max-width: 34ch;
+    line-height: 1.4;
+  }
+
+  .chip {
+    flex: none;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-  }
-
-  .badge-dot {
-    width: 7px;
-    height: 7px;
+    gap: 7px;
+    padding: 5px 10px;
     border-radius: 999px;
-    background: var(--accent);
-    box-shadow: 0 0 12px rgba(56, 189, 248, 0.9);
+    border: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    white-space: nowrap;
   }
 
-  .password-row {
-    margin-top: 10px;
-    margin-bottom: 16px;
-    padding: 10px 10px 10px 12px;
+  .chip .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--white);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  }
+
+  /* ===== Panels ===== */
+  .panel {
+    border: 1px solid var(--line);
     border-radius: var(--radius);
-    border: 1px solid rgba(148, 163, 184, 0.6);
-    background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+    background: linear-gradient(180deg, var(--panel), #0c0c0c);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 24px 60px -30px rgba(0, 0, 0, 0.9);
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px 0;
+  }
+
+  .panel-label {
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .panel-meta {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-align: right;
+  }
+
+  /* ===== Output list ===== */
+  .pw-list {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 292px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3a transparent;
+  }
+
+  .pw-list::-webkit-scrollbar { width: 8px; }
+  .pw-list::-webkit-scrollbar-thumb {
+    background: #2e2e2e;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .empty {
+    padding: 26px 14px;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--faint);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.012);
+  }
+
+  .pw-row {
     display: flex;
     align-items: center;
     gap: 10px;
-  }
-
-  .password-display {
-    flex: 1;
-    font-family: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-    font-size: 0.9rem;
-    letter-spacing: 0.08em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: #e5e7eb;
-  }
-
-  .password-display.placeholder {
-    color: #6b7280;
-  }
-
-  .password-meta {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-  }
-
-  .btn {
-    border: none;
-    outline: none;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel-2);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
     cursor: pointer;
-    border-radius: 999px;
-    padding: 7px 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: radial-gradient(circle at top, rgba(56, 189, 248, 0.2), rgba(15, 23, 42, 0.98));
-    color: var(--accent);
-    border: 1px solid rgba(56, 189, 248, 0.7);
-    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background 0.12s ease-out;
-    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9), 0 10px 30px rgba(15, 23, 42, 0.9);
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
   }
 
-  .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9), 0 16px 40px rgba(15, 23, 42, 0.95);
-    background: radial-gradient(circle at top, rgba(56, 189, 248, 0.28), rgba(15, 23, 42, 0.98));
+  .pw-row:hover {
+    border-color: var(--line-strong);
+    background: var(--panel-3);
   }
 
-  .btn:active {
-    transform: translateY(0);
-    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9), 0 8px 24px rgba(15, 23, 42, 0.9);
+  .pw-row:active { transform: scale(0.995); }
+
+  .pw-row:focus-visible {
+    outline: 2px solid var(--white);
+    outline-offset: 1px;
   }
 
-  .btn.secondary {
-    background: rgba(15, 23, 42, 0.96);
-    border-color: rgba(148, 163, 184, 0.7);
-    color: var(--text-main);
+  .pw-row.copied {
+    border-color: rgba(255, 255, 255, 0.55);
+    background: #202020;
   }
 
-  .btn.secondary:hover {
-    background: rgba(15, 23, 42, 0.98);
+  .pw-idx {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: var(--faint);
+    min-width: 18px;
+    flex: none;
   }
 
-  .controls {
-    display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr);
-    gap: 14px;
-    margin-bottom: 14px;
+  .pw-text {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--mono);
+    font-size: 0.855rem;
+    letter-spacing: 0.055em;
+    word-break: break-all;
+    line-height: 1.35;
+    user-select: all;
   }
 
-  .control-group {
-    padding: 10px 11px;
-    border-radius: var(--radius);
-    border: 1px solid rgba(148, 163, 184, 0.5);
-    background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+  .pw-hint {
+    flex: none;
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--faint);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 3px 7px;
+    transition: color 0.15s ease, border-color 0.15s ease;
   }
 
-  .control-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-  }
+  .pw-row:hover .pw-hint { color: var(--text); border-color: var(--line-strong); }
+  .pw-row.copied .pw-hint { color: var(--white); border-color: rgba(255, 255, 255, 0.5); }
 
-  .control-title {
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
+  .pw-list.single .pw-idx { display: none; }
+  .pw-list.single .pw-text { font-size: 1.02rem; letter-spacing: 0.08em; text-align: center; }
+  .pw-list.single .pw-row { padding: 18px 12px; }
+  .pw-list.single .pw-hint { display: none; }
+  .pw-list.single .pw-row { justify-content: center; }
 
-  .control-subtitle {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-  }
-
-  .length-row {
+  /* ===== Toolbar ===== */
+  .toolbar {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 4px;
+    padding: 0 12px 12px;
+    flex-wrap: wrap;
   }
 
-  .length-value {
-    font-size: 0.8rem;
-    padding: 2px 8px;
-    border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.7);
-    background: rgba(15, 23, 42, 0.96);
-    color: var(--accent);
-    min-width: 34px;
-    text-align: center;
+  .toolbar-hint {
+    margin-left: auto;
+    font-size: 0.68rem;
+    color: var(--faint);
+  }
+
+  /* ===== Buttons ===== */
+  .btn {
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    padding: 8px 14px;
+    border-radius: 9px;
+    border: 1px solid var(--line-strong);
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .btn:hover:not(:disabled) { background: var(--panel-3); border-color: #4a4a4a; }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--white); outline-offset: 2px; }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn.primary {
+    background: #f4f4f4;
+    border-color: #f4f4f4;
+    color: #0a0a0a;
+    font-weight: 600;
+  }
+
+  .btn.primary:hover:not(:disabled) { background: var(--white); border-color: var(--white); }
+
+  .btn .ico { font-size: 0.85rem; line-height: 1; opacity: 0.85; }
+
+  /* ===== Controls ===== */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .field {
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--panel-2);
+    padding: 11px 12px 13px;
+  }
+
+  .field-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .field-label {
+    font-size: 0.73rem;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .field-value {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--white);
   }
 
   input[type="range"] {
@@ -244,9 +351,12 @@
     width: 100%;
     height: 4px;
     border-radius: 999px;
-    background: linear-gradient(90deg, var(--accent-soft), rgba(31, 41, 55, 0.9));
+    background: linear-gradient(90deg, #ededed 0 var(--pct, 50%), #2a2a2a var(--pct, 50%) 100%);
     outline: none;
+    cursor: pointer;
   }
+
+  input[type="range"]:focus-visible { outline: 2px solid var(--white); outline-offset: 4px; }
 
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -254,451 +364,750 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+    background: var(--white);
+    border: none;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.13);
     cursor: pointer;
+    transition: box-shadow 0.15s ease;
   }
+
+  input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.18); }
 
   input[type="range"]::-moz-range-thumb {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--white);
     border: none;
-    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.13);
     cursor: pointer;
   }
 
-  .checkboxes {
+  .charsets {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px 10px;
-    margin-top: 4px;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 0 14px 14px;
   }
 
-  .checkbox {
+  .toggle {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    color: var(--text-muted);
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel-2);
     cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
   }
 
-  .checkbox input {
-    width: 14px;
-    height: 14px;
-    accent-color: var(--accent);
-    cursor: pointer;
+  .toggle:hover { border-color: var(--line-strong); background: var(--panel-3); }
+
+  .toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
   }
 
-  .footer-row {
+  .tick {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    border: 1px solid var(--line-strong);
+    background: #0d0d0d;
+    display: grid;
+    place-items: center;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .tick::after {
+    content: "";
+    width: 8px;
+    height: 4px;
+    border-left: 1.6px solid #0a0a0a;
+    border-bottom: 1.6px solid #0a0a0a;
+    transform: rotate(-45deg) translate(0.5px, -1px);
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+
+  .toggle input:checked + .tick {
+    background: var(--white);
+    border-color: var(--white);
+  }
+
+  .toggle input:checked + .tick::after { opacity: 1; }
+
+  .toggle:has(input:checked) {
+    border-color: #464646;
+    background: #1d1d1d;
+  }
+
+  .toggle input:focus-visible + .tick { outline: 2px solid var(--white); outline-offset: 3px; }
+
+  .toggle-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .toggle-text strong { font-size: 0.755rem; font-weight: 500; color: var(--text); }
+  .toggle-text span { font-family: var(--mono); font-size: 0.66rem; color: var(--faint); }
+
+  /* ===== Status bar ===== */
+  .statusbar {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    margin-top: 6px;
+    gap: 12px;
+    padding: 2px 6px;
+    flex-wrap: wrap;
   }
 
   .strength {
-    font-size: 0.7rem;
-    color: var(--text-muted);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 9px;
+    font-size: 0.72rem;
+    color: var(--muted);
   }
 
-  .strength-bars {
-    display: flex;
-    gap: 3px;
-  }
+  .bars { display: flex; gap: 3px; }
 
-  .strength-bar {
-    width: 14px;
+  .bar {
+    width: 20px;
     height: 4px;
     border-radius: 999px;
-    background: rgba(31, 41, 55, 0.9);
+    background: #262626;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
   }
 
-  .strength-bar.active-1 {
-    background: #f97316;
+  .bar.on-1 { background: #5c5c5c; }
+  .bar.on-2 { background: #8d8d8d; }
+  .bar.on-3 { background: #c4c4c4; }
+  .bar.on-4 { background: var(--white); box-shadow: 0 0 8px rgba(255, 255, 255, 0.55); }
+
+  .status-text { font-size: 0.72rem; color: var(--muted); font-family: var(--mono); }
+
+  .notice {
+    font-size: 0.72rem;
+    color: var(--muted);
+    min-height: 1em;
   }
 
-  .strength-bar.active-2 {
-    background: #facc15;
+  .notice.strong { color: var(--text); }
+
+  /* ===== Actions ===== */
+  .actions { display: flex; gap: 8px; }
+  .actions .btn.primary { flex: 1; padding: 12px 16px; font-size: 0.85rem; }
+  .actions .btn { padding: 12px 16px; }
+
+  kbd {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    border: 1px solid var(--line-strong);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    padding: 1px 5px;
+    color: var(--muted);
   }
 
-  .strength-bar.active-3 {
-    background: #22c55e;
-  }
-
-  .strength-bar.active-4 {
-    background: #22c55e;
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
-  }
-
-  .error {
-    font-size: 0.7rem;
-    color: var(--danger);
-    margin-top: 4px;
-    min-height: 14px;
-  }
-
-  .actions {
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    z-index: 10;
+    transform: translate(-50%, 16px);
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
     gap: 8px;
-    margin-top: 10px;
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    background: rgba(22, 22, 22, 0.96);
+    backdrop-filter: blur(8px);
+    color: var(--text);
+    font-size: 0.78rem;
+    box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
   }
 
-  @media (max-width: 640px) {
-    .app {
-      margin: 16px;
-      padding: 18px 14px 20px;
-    }
-    .controls {
-      grid-template-columns: minmax(0, 1fr);
-    }
+  .toast .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--white);
+  }
+
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 560px) {
+    body { padding: 26px 14px 56px; }
+    .topbar { flex-direction: column; gap: 12px; }
+    .chip { align-self: flex-start; }
+    .controls { grid-template-columns: 1fr; }
+    .charsets { grid-template-columns: 1fr 1fr; }
+    .pw-list.single .pw-text { font-size: 0.92rem; }
+    .toolbar-hint { display: none; }
+    .actions { flex-direction: column-reverse; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   }
 </style>
 </head>
 <body>
-<canvas id="particles"></canvas>
-<div class="overlay-gradient"></div>
+<canvas id="particles" aria-hidden="true"></canvas>
 
-<div class="app">
-  <header class="app-header">
-    <div class="title-block">
-      <div class="title">
-        Quantum Password Forge
-        <span class="title-pill">max 72 chars</span>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">///</div>
+      <div>
+        <h1>Password Forge</h1>
+        <p class="tagline">Cryptographically random passwords, generated locally in your browser. Nothing is ever sent anywhere.</p>
       </div>
-      <div class="subtitle">Crypto‑grade randomness, copy‑ready output, and a live particle field.</div>
     </div>
-    <div class="badge">
-      <span class="badge-dot"></span>
-      <span>crypto.getRandomValues()</span>
-    </div>
+    <div class="chip"><span class="dot"></span>crypto.getRandomValues()</div>
   </header>
 
-  <section class="password-row">
-    <div style="flex:1; min-width:0;">
-      <div id="passwordDisplay" class="password-display placeholder">
-        Click “Generate” to forge a password…
-      </div>
-      <div class="password-meta" id="passwordMeta"></div>
-    </div>
-    <button class="btn secondary" id="copyBtn" title="Copy password">
-      <span>Copy</span>
-    </button>
-  </section>
-
-  <section class="controls">
-    <div class="control-group">
-      <div class="control-header">
-        <div>
-          <div class="control-title">Length</div>
-          <div class="control-subtitle">Up to 72 characters</div>
-        </div>
-      </div>
-      <div class="length-row">
-        <input type="range" id="lengthSlider" min="4" max="72" value="20" />
-        <div class="length-value" id="lengthValue">20</div>
-      </div>
+  <section class="panel" aria-labelledby="outputLabel">
+    <div class="panel-head">
+      <span class="panel-label" id="outputLabel">Output</span>
+      <span class="panel-meta" id="panelMeta">Nothing generated yet</span>
     </div>
 
-    <div class="control-group">
-      <div class="control-header">
-        <div>
-          <div class="control-title">Character set</div>
-          <div class="control-subtitle">Choose what to include</div>
-        </div>
-      </div>
-      <div class="checkboxes">
-        <label class="checkbox">
-          <input type="checkbox" id="useLower" checked />
-          <span>Lowercase (a‑z)</span>
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" id="useUpper" checked />
-          <span>Uppercase (A‑Z)</span>
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" id="useDigits" checked />
-          <span>Digits (0‑9)</span>
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" id="useSymbols" />
-          <span>Symbols (!@#$…)</span>
-        </label>
-      </div>
+    <div class="pw-list" id="pwList" aria-live="polite">
+      <div class="empty">Press Generate to forge your passwords.</div>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn" id="copyAllBtn" type="button" disabled>
+        <span class="ico" aria-hidden="true">⧉</span>Copy all
+      </button>
+      <button class="btn" id="downloadBtn" type="button" disabled>
+        <span class="ico" aria-hidden="true">↓</span>Download .txt
+      </button>
+      <span class="toolbar-hint">Click any password to copy it</span>
     </div>
   </section>
 
-  <div class="footer-row">
+  <section class="panel" aria-label="Generator settings">
+    <div class="controls">
+      <div class="field">
+        <div class="field-head">
+          <label class="field-label" for="lengthSlider">Length</label>
+          <span class="field-value" id="lengthValue">20</span>
+        </div>
+        <input type="range" id="lengthSlider" min="4" max="72" value="20" aria-describedby="lengthValue" />
+      </div>
+
+      <div class="field">
+        <div class="field-head">
+          <label class="field-label" for="amountSlider">How many</label>
+          <span class="field-value" id="amountValue">5</span>
+        </div>
+        <input type="range" id="amountSlider" min="1" max="50" value="5" aria-describedby="amountValue" />
+      </div>
+    </div>
+
+    <div class="charsets">
+      <label class="toggle">
+        <input type="checkbox" id="useLower" checked />
+        <span class="tick" aria-hidden="true"></span>
+        <span class="toggle-text"><strong>Lowercase</strong><span>a–z</span></span>
+      </label>
+
+      <label class="toggle">
+        <input type="checkbox" id="useUpper" checked />
+        <span class="tick" aria-hidden="true"></span>
+        <span class="toggle-text"><strong>Uppercase</strong><span>A–Z</span></span>
+      </label>
+
+      <label class="toggle">
+        <input type="checkbox" id="useDigits" checked />
+        <span class="tick" aria-hidden="true"></span>
+        <span class="toggle-text"><strong>Numbers</strong><span>0–9</span></span>
+      </label>
+
+      <label class="toggle">
+        <input type="checkbox" id="useSymbols" />
+        <span class="tick" aria-hidden="true"></span>
+        <span class="toggle-text"><strong>Symbols</strong><span>!@#$…</span></span>
+      </label>
+    </div>
+  </section>
+
+  <div class="statusbar">
     <div class="strength">
-      <span>Strength</span>
-      <div class="strength-bars">
-        <div class="strength-bar" id="s1"></div>
-        <div class="strength-bar" id="s2"></div>
-        <div class="strength-bar" id="s3"></div>
-        <div class="strength-bar" id="s4"></div>
+      <span id="strengthLabel">Strength</span>
+      <div class="bars" aria-hidden="true">
+        <div class="bar" id="b1"></div>
+        <div class="bar" id="b2"></div>
+        <div class="bar" id="b3"></div>
+        <div class="bar" id="b4"></div>
       </div>
+      <span class="status-text" id="strengthText">—</span>
     </div>
-    <div class="error" id="errorMsg"></div>
+    <div class="notice" id="notice" role="status" aria-live="polite"></div>
   </div>
 
   <div class="actions">
-    <button class="btn secondary" id="regenerateBtn">Regenerate</button>
-    <button class="btn" id="generateBtn">Generate</button>
+    <button class="btn primary" id="generateBtn" type="button">
+      Generate <kbd>↵</kbd>
+    </button>
   </div>
 </div>
 
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="dot" aria-hidden="true"></span>
+  <span id="toastText"></span>
+</div>
+
 <script>
-  // ===== Password generator using crypto.getRandomValues =====
+(function () {
+  "use strict";
+
+  // ===== Character sets =====
+  const SETS = {
+    lower: "abcdefghijklmnopqrstuvwxyz",
+    upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    digits: "0123456789",
+    symbols: "!@#$%^&*()-_=+[]{};:,.<>/?|~"
+  };
+
+  // ===== Elements =====
   const lengthSlider = document.getElementById("lengthSlider");
+  const amountSlider = document.getElementById("amountSlider");
   const lengthValue = document.getElementById("lengthValue");
+  const amountValue = document.getElementById("amountValue");
   const useLower = document.getElementById("useLower");
   const useUpper = document.getElementById("useUpper");
   const useDigits = document.getElementById("useDigits");
   const useSymbols = document.getElementById("useSymbols");
-  const passwordDisplay = document.getElementById("passwordDisplay");
-  const passwordMeta = document.getElementById("passwordMeta");
-  const errorMsg = document.getElementById("errorMsg");
-  const copyBtn = document.getElementById("copyBtn");
+  const pwList = document.getElementById("pwList");
+  const panelMeta = document.getElementById("panelMeta");
+  const copyAllBtn = document.getElementById("copyAllBtn");
+  const downloadBtn = document.getElementById("downloadBtn");
   const generateBtn = document.getElementById("generateBtn");
-  const regenerateBtn = document.getElementById("regenerateBtn");
-  const strengthBars = [
-    document.getElementById("s1"),
-    document.getElementById("s2"),
-    document.getElementById("s3"),
-    document.getElementById("s4"),
+  const strengthText = document.getElementById("strengthText");
+  const notice = document.getElementById("notice");
+  const toastEl = document.getElementById("toast");
+  const toastText = document.getElementById("toastText");
+  const bars = [
+    document.getElementById("b1"),
+    document.getElementById("b2"),
+    document.getElementById("b3"),
+    document.getElementById("b4")
   ];
 
-  lengthSlider.addEventListener("input", () => {
-    lengthValue.textContent = lengthSlider.value;
-    updateStrengthPreview();
-  });
+  let generated = [];
+  let toastTimer = null;
 
-  [useLower, useUpper, useDigits, useSymbols].forEach(cb =>
-    cb.addEventListener("change", () => {
-      updateStrengthPreview();
-    })
-  );
+  // ===== Secure random helpers (unbiased modulo) =====
+  const randBuf = new Uint32Array(256);
+  let randPos = randBuf.length;
 
-  function getCharPool() {
-    let pool = "";
-    if (useLower.checked) pool += "abcdefghijklmnopqrstuvwxyz";
-    if (useUpper.checked) pool += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    if (useDigits.checked) pool += "0123456789";
-    if (useSymbols.checked) pool += "!@#$%^&*()-_=+[]{};:,.<>/?|~";
-    return pool;
+  function nextUint32() {
+    if (randPos >= randBuf.length) {
+      crypto.getRandomValues(randBuf);
+      randPos = 0;
+    }
+    return randBuf[randPos++];
   }
 
-  function generatePassword() {
-    errorMsg.textContent = "";
-    const length = Math.min(parseInt(lengthSlider.value, 10) || 0, 72);
-    lengthSlider.value = length;
-    lengthValue.textContent = length;
-
-    const pool = getCharPool();
-    if (!pool) {
-      errorMsg.textContent = "Select at least one character type.";
-      return "";
-    }
-    if (length < 4) {
-      errorMsg.textContent = "Use length 4 or more for better security.";
-    }
-
-    const poolLength = pool.length;
-    const randomBytes = new Uint32Array(length);
-    crypto.getRandomValues(randomBytes);
-
-    let password = "";
-    for (let i = 0; i < length; i++) {
-      const index = randomBytes[i] % poolLength;
-      password += pool.charAt(index);
-    }
-    return password;
+  function randomInt(max) {
+    const limit = Math.floor(4294967296 / max) * max;
+    let value;
+    do {
+      value = nextUint32();
+    } while (value >= limit);
+    return value % max;
   }
 
-  function updateStrengthPreview() {
-    const length = parseInt(lengthSlider.value, 10) || 0;
-    const pool = getCharPool();
-    const variety =
-      (useLower.checked ? 1 : 0) +
-      (useUpper.checked ? 1 : 0) +
-      (useDigits.checked ? 1 : 0) +
-      (useSymbols.checked ? 1 : 0);
+  // ===== State helpers =====
+  function clampInt(raw, min, max) {
+    const n = parseInt(raw, 10);
+    if (Number.isNaN(n)) return min;
+    return Math.min(max, Math.max(min, n));
+  }
 
-    let score = 0;
-    if (length >= 8) score++;
-    if (length >= 12) score++;
-    if (length >= 20) score++;
-    if (variety >= 2) score++;
-    if (variety >= 3) score++;
-    if (variety === 4) score++;
+  function activeSets() {
+    const sets = [];
+    if (useLower.checked) sets.push(SETS.lower);
+    if (useUpper.checked) sets.push(SETS.upper);
+    if (useDigits.checked) sets.push(SETS.digits);
+    if (useSymbols.checked) sets.push(SETS.symbols);
+    return sets;
+  }
 
-    let level = 0;
-    if (score <= 1) level = 1;
-    else if (score <= 3) level = 2;
-    else if (score <= 5) level = 3;
-    else level = 4;
+  function setSliderFill(slider) {
+    const min = Number(slider.min);
+    const max = Number(slider.max);
+    const pct = ((Number(slider.value) - min) / (max - min)) * 100;
+    slider.style.setProperty("--pct", pct.toFixed(2) + "%");
+  }
 
-    strengthBars.forEach((bar, idx) => {
-      bar.className = "strength-bar";
-      if (idx < level) {
-        bar.classList.add("active-" + level);
-      }
+  function setNotice(message, strong) {
+    notice.textContent = message || "";
+    notice.classList.toggle("strong", Boolean(strong) && Boolean(message));
+  }
+
+  function showToast(message) {
+    toastText.textContent = message;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1900);
+  }
+
+  // ===== Generation =====
+  function generateOne(length, pool, sets) {
+    const chars = [];
+
+    // Guarantee at least one character from every selected set (when it fits).
+    if (length >= sets.length) {
+      for (const set of sets) chars.push(set[randomInt(set.length)]);
+    }
+
+    while (chars.length < length) chars.push(pool[randomInt(pool.length)]);
+
+    // Fisher–Yates shuffle so guaranteed characters are not in fixed positions.
+    for (let i = chars.length - 1; i > 0; i--) {
+      const j = randomInt(i + 1);
+      const tmp = chars[i];
+      chars[i] = chars[j];
+      chars[j] = tmp;
+    }
+
+    return chars.join("");
+  }
+
+  function generate() {
+    const length = clampInt(lengthSlider.value, 4, 72);
+    const amount = clampInt(amountSlider.value, 1, 50);
+
+    lengthSlider.value = String(length);
+    amountSlider.value = String(amount);
+    lengthValue.textContent = String(length);
+    amountValue.textContent = String(amount);
+
+    const sets = activeSets();
+    if (!sets.length) {
+      generated = [];
+      render();
+      setNotice("Pick at least one character type.", true);
+      return;
+    }
+
+    const pool = sets.join("");
+    generated = [];
+    for (let i = 0; i < amount; i++) {
+      generated.push(generateOne(length, pool, sets));
+    }
+
+    render();
+    setNotice("");
+    updateStrength();
+  }
+
+  // ===== Rendering =====
+  function render() {
+    pwList.textContent = "";
+    const count = generated.length;
+    const isSingle = count === 1;
+    pwList.classList.toggle("single", isSingle);
+
+    if (!count) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "Press Generate to forge your passwords.";
+      pwList.append(empty);
+      panelMeta.textContent = "Nothing generated yet";
+      copyAllBtn.disabled = true;
+      downloadBtn.disabled = true;
+      return;
+    }
+
+    const length = generated[0].length;
+    panelMeta.textContent = isSingle
+      ? length + " characters"
+      : count + " passwords · " + length + " characters each";
+
+    generated.forEach((password, index) => {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "pw-row";
+      row.title = "Copy this password";
+
+      const idx = document.createElement("span");
+      idx.className = "pw-idx";
+      idx.textContent = String(index + 1).padStart(2, "0");
+
+      const text = document.createElement("span");
+      text.className = "pw-text";
+      text.textContent = password;
+
+      const hint = document.createElement("span");
+      hint.className = "pw-hint";
+      hint.textContent = "copy";
+
+      row.append(idx, text, hint);
+      row.addEventListener("click", () => copyPassword(password, row, hint));
+      pwList.append(row);
     });
+
+    copyAllBtn.disabled = false;
+    downloadBtn.disabled = false;
   }
 
-  function renderPassword(pwd) {
-    if (!pwd) {
-      passwordDisplay.textContent = "Click “Generate” to forge a password…";
-      passwordDisplay.classList.add("placeholder");
-      passwordMeta.textContent = "";
-      return;
-    }
-    passwordDisplay.textContent = pwd;
-    passwordDisplay.classList.remove("placeholder");
-    passwordMeta.textContent = `${pwd.length} characters • copy‑ready`;
-  }
-
-  generateBtn.addEventListener("click", () => {
-    const pwd = generatePassword();
-    renderPassword(pwd);
-    updateStrengthPreview();
-  });
-
-  regenerateBtn.addEventListener("click", () => {
-    const current = passwordDisplay.classList.contains("placeholder")
-      ? ""
-      : passwordDisplay.textContent;
-    const pwd = generatePassword();
-    if (pwd && pwd !== current) {
-      renderPassword(pwd);
-    } else if (pwd) {
-      // if same by chance, regenerate once more
-      renderPassword(generatePassword());
-    }
-    updateStrengthPreview();
-  });
-
-  copyBtn.addEventListener("click", async () => {
-    const pwd = passwordDisplay.classList.contains("placeholder")
-      ? ""
-      : passwordDisplay.textContent;
-    if (!pwd) {
-      errorMsg.textContent = "Nothing to copy yet.";
-      return;
+  // ===== Copy system =====
+  async function writeClipboard(value) {
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(value);
+        return true;
+      } catch (err) {
+        /* fall through to legacy path */
+      }
     }
     try {
-      await navigator.clipboard.writeText(pwd);
-      errorMsg.textContent = "Copied to clipboard.";
-      setTimeout(() => {
-        if (errorMsg.textContent === "Copied to clipboard.") {
-          errorMsg.textContent = "";
-        }
-      }, 1500);
-    } catch {
-      errorMsg.textContent = "Clipboard not available in this context.";
+      const helper = document.createElement("textarea");
+      helper.value = value;
+      helper.setAttribute("readonly", "");
+      helper.style.position = "fixed";
+      helper.style.top = "-1000px";
+      helper.style.opacity = "0";
+      document.body.append(helper);
+      helper.select();
+      const ok = document.execCommand("copy");
+      helper.remove();
+      return ok;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  async function copyPassword(password, row, hint) {
+    const ok = await writeClipboard(password);
+    if (!ok) {
+      showToast("Clipboard blocked — select the text instead");
+      return;
+    }
+    row.classList.add("copied");
+    hint.textContent = "copied";
+    setTimeout(() => {
+      row.classList.remove("copied");
+      hint.textContent = "copy";
+    }, 1300);
+    showToast("Password copied");
+  }
+
+  async function copyAll() {
+    if (!generated.length) return;
+    const ok = await writeClipboard(generated.join("\n"));
+    if (!ok) {
+      showToast("Clipboard blocked — download the .txt instead");
+      return;
+    }
+    showToast(
+      generated.length === 1
+        ? "Password copied"
+        : "Copied " + generated.length + " passwords"
+    );
+  }
+
+  // ===== Download =====
+  function two(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  function fileStamp() {
+    const d = new Date();
+    return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate());
+  }
+
+  function downloadPasswords() {
+    if (!generated.length) return;
+
+    const body = generated.map((p) => "password: (" + p + ")").join("\n") + "\n";
+    const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = (generated.length === 1 ? "password-" : "passwords-") + fileStamp() + ".txt";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+    setNotice(
+      "Saved " + generated.length + (generated.length === 1 ? " password" : " passwords") + " to a .txt file.",
+      true
+    );
+    showToast("Downloaded " + link.download);
+  }
+
+  // ===== Strength meter =====
+  function updateStrength() {
+    const length = clampInt(lengthSlider.value, 4, 72);
+    const poolSize = activeSets().join("").length || 1;
+    const bits = length * Math.log2(poolSize);
+
+    let level = 1;
+    let label = "Weak";
+    if (bits >= 80) {
+      level = 4;
+      label = "Strong";
+    } else if (bits >= 60) {
+      level = 3;
+      label = "Good";
+    } else if (bits >= 40) {
+      level = 2;
+      label = "Fair";
+    }
+
+    bars.forEach((bar, index) => {
+      bar.className = "bar";
+      if (index < level) bar.classList.add("on-" + level);
+    });
+
+    strengthText.textContent = label.toLowerCase() + " · " + Math.round(bits) + " bits";
+  }
+
+  // ===== Events =====
+  lengthSlider.addEventListener("input", () => {
+    lengthSlider.value = String(clampInt(lengthSlider.value, 4, 72));
+    lengthValue.textContent = lengthSlider.value;
+    setSliderFill(lengthSlider);
+    updateStrength();
+    setNotice("");
+  });
+
+  amountSlider.addEventListener("input", () => {
+    amountSlider.value = String(clampInt(amountSlider.value, 1, 50));
+    amountValue.textContent = amountSlider.value;
+    setSliderFill(amountSlider);
+    setNotice("");
+  });
+
+  [useLower, useUpper, useDigits, useSymbols].forEach((box) => {
+    box.addEventListener("change", () => {
+      updateStrength();
+      setNotice("");
+    });
+  });
+
+  generateBtn.addEventListener("click", generate);
+  copyAllBtn.addEventListener("click", copyAll);
+  downloadBtn.addEventListener("click", downloadPasswords);
+
+  document.addEventListener("keydown", (event) => {
+    const tag = (event.target && event.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    if (event.key === "Enter" && !event.metaKey && !event.ctrlKey) {
+      event.preventDefault();
+      generate();
     }
   });
 
-  updateStrengthPreview();
+  // ===== Init =====
+  setSliderFill(lengthSlider);
+  setSliderFill(amountSlider);
+  updateStrength();
+  render();
 
-  // ===== Live particle background =====
+  // ===== Background particle field =====
   const canvas = document.getElementById("particles");
   const ctx = canvas.getContext("2d");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let particles = [];
-  let width = window.innerWidth;
-  let height = window.innerHeight;
+  let width = 0;
+  let height = 0;
+  let dpr = 1;
 
   function resizeCanvas() {
     width = window.innerWidth;
     height = window.innerHeight;
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  window.addEventListener("resize", resizeCanvas);
-  resizeCanvas();
-
-  function createParticles(count) {
+  function seedParticles() {
+    const count = Math.min(90, Math.max(36, Math.round((width * height) / 26000)));
     particles = [];
     for (let i = 0; i < count; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.35,
-        vy: (Math.random() - 0.5) * 0.35,
-        r: 1 + Math.random() * 1.6,
-        alpha: 0.2 + Math.random() * 0.6,
+        vx: (Math.random() - 0.5) * 0.28,
+        vy: (Math.random() - 0.5) * 0.28,
+        r: 0.7 + Math.random() * 1.3,
+        alpha: 0.08 + Math.random() * 0.3
       });
     }
   }
 
-  createParticles(120);
-
-  function drawParticles() {
+  function draw() {
     ctx.clearRect(0, 0, width, height);
 
-    // soft background glow
-    const gradient = ctx.createRadialGradient(
-      width * 0.5,
-      height * 0.2,
-      0,
-      width * 0.5,
-      height * 0.2,
-      width * 0.8
-    );
-    gradient.addColorStop(0, "rgba(15, 23, 42, 0.4)");
-    gradient.addColorStop(1, "rgba(2, 6, 23, 0.9)");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-
-    // particles
-    for (const p of particles) {
-      p.x += p.vx;
-      p.y += p.vy;
-
-      if (p.x < -50) p.x = width + 50;
-      if (p.x > width + 50) p.x = -50;
-      if (p.y < -50) p.y = height + 50;
-      if (p.y > height + 50) p.y = -50;
-
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(56, 189, 248, ${p.alpha})`;
-      ctx.fill();
-    }
-
-    // subtle connecting lines
-    const maxDist = 120;
+    const maxDist = 130;
     ctx.lineWidth = 0.6;
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
-        const p1 = particles[i];
-        const p2 = particles[j];
-        const dx = p1.x - p2.x;
-        const dy = p1.y - p2.y;
+        const a = particles[i];
+        const b = particles[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < maxDist) {
-          const alpha = (1 - dist / maxDist) * 0.35;
-          ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+          ctx.strokeStyle = "rgba(255, 255, 255, " + ((1 - dist / maxDist) * 0.07).toFixed(3) + ")";
           ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
           ctx.stroke();
         }
       }
     }
 
-    requestAnimationFrame(drawParticles);
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255, 255, 255, " + p.alpha.toFixed(3) + ")";
+      ctx.fill();
+    }
   }
 
-  drawParticles();
+  function tick() {
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < -40) p.x = width + 40;
+      if (p.x > width + 40) p.x = -40;
+      if (p.y < -40) p.y = height + 40;
+      if (p.y > height + 40) p.y = -40;
+    }
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function setupCanvas() {
+    resizeCanvas();
+    seedParticles();
+    draw();
+  }
+
+  window.addEventListener("resize", setupCanvas);
+  setupCanvas();
+
+  if (!reduceMotion) requestAnimationFrame(tick);
+})();
 </script>
 </body>
 </html>
